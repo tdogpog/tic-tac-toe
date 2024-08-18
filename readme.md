@@ -1,0 +1,1 @@
+html/css/js tictactoe game intended to practice design patterns (module,factory)
