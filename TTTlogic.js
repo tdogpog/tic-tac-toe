@@ -1,10 +1,41 @@
-//board will be an IIFE
+//rendering / DOM process
 
-//players will be a factory
+const displayController=(function(){
+    const gameBoardElement=document.getElementById('board');
 
-//IIFE for control gameflow
+    function renderBoard(board){
+        gameBoardElement.innerHTML='';
 
+        //create 3x3 cell div structure
+        //with event listeners on each
+        // that extract the text content from our game_board
+        // and append themselves to the main div as children
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                const cell=document.createElement('div');
+                cell.classList.add('cell');
+                cell.textContent=board.getCell(i,j);
 
+                // uses the for loop iterators attached to 
+                // each cell to know where to make a move
+                // our coord system here lines up with how 
+                //makemove method works.
+                cell.addEventListener('click',()=>{
+                    gameState.makeMove(i,j);
+                    //recreate board when a move has been made
+                    renderBoard(board);
+                });
+
+                gameBoardElement.appendChild(cell);
+
+            }
+        }
+
+    }
+    return{renderBoard};
+})();
+
+//GAME LOGIC
 // make a board, set value on board, return a boards spaces value
 const game_board= (function () {
 
@@ -13,7 +44,7 @@ const game_board= (function () {
 
     // making a 3x3 array
     for(let i=0;i<3;i++){
-        innerlist=[];
+        let innerlist=[];
         for(let j=0;j<3;j++){
             innerlist.push('');
         }
@@ -43,6 +74,7 @@ const game_board= (function () {
 
 })();
 
+
 const gameState= (function () {
     
     //switch for ending the game
@@ -71,6 +103,8 @@ const gameState= (function () {
     
     function winChecks(){
 
+
+        //set of all winning combos
         const win_coords=[
         // horz
         [[0,0], [0,1], [0,2]],
@@ -85,27 +119,29 @@ const gameState= (function () {
         [[0,2], [1,1], [2,0]],
         ];
 
-        win_coords.forEach(combo=> {
-            const [a,b,c]=combo;
+        //for loop to breakout if a win is detected
 
-            if(board.getCell(a[0],a[1]) &&
-                board.getCell(a[0],a[1])=== board.getCell(b[0],b[1]) &&
-                board.getCell(a[0],a[1])=== board.getCell(c[0],c[1])){
+        for (let i = 0; i < win_coords.length; i++) {
+            const [a, b, c] = win_coords[i];
+            if (board.getCell(a[0], a[1]) &&
+                board.getCell(a[0], a[1]) === board.getCell(b[0], b[1]) &&
+                board.getCell(a[0], a[1]) === board.getCell(c[0], c[1])) {
                 console.log(`${currentPlayer.getplayerName()} wins!`);
-                gameOver=true;
-                //exit the loop early if you find the winning condition
+                gameOver = true;
                 return;
-                
             }
-        });
+        }
 
+        //inefficient,but check for a tie every iteration
+        //we could implement a counter for when the board is full and do a final check and then send
+        //it to tie_checks if the wincheck didnt return a win
         if(!gameOver){
-            tie_checks();
+            tieChecks();
         }
 
     }
 
-    function tie_checks() {
+    function tieChecks() {
         let allFilled = true;
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
@@ -125,6 +161,7 @@ const gameState= (function () {
 
     function makeMove(row,col){
 
+        //backup check if the game is over
         if(gameOver){
             console.log('Game over!')
             return;
@@ -132,7 +169,13 @@ const gameState= (function () {
         
         if(board.getCell(row,col)===''){
             board.setCell(row,col,currentPlayer.getplayerSymbol());
+
             winChecks();
+
+            if(gameOver){
+                return;
+            }
+
             if (currentPlayer===player1){
                 currentPlayer=player2;
             }
@@ -147,7 +190,19 @@ const gameState= (function () {
 
     }
 
-    return{startGame,makeMove,winChecks, getcurrentPlayer:()=> currentPlayer}
+    function resetGame(){
+        for (let i=0;i<3;i++){
+            for (let j=0;j<3;j++){
+                board.setCell(i,j,'');
+                
+            }
+        }
+        currentPlayer=player1;
+        gameOver=false;
+        console.log('Game Reset')
+    }
+
+    return{startGame,makeMove,winChecks, resetGame, getcurrentPlayer:()=> currentPlayer}
 
 })();
   
@@ -180,9 +235,31 @@ function createPlayerFactory(){
         const getplayerName=()=> name;
         const getplayerSymbol=()=> symbol;
 
-        return {name, symbol, getplayerNum, getplayerName,getplayerSymbol};
+        return {getplayerNum, getplayerName,getplayerSymbol};
 
 
     };
 
 };
+
+const createPlayer = createPlayerFactory();
+const player1 = createPlayer('Player 1');
+const player2 = createPlayer('Player 2');
+
+gameState.startGame(player1, player2);
+
+
+
+
+window.onload = function () {
+    displayController.renderBoard(game_board);
+};
+
+
+//program execution example
+
+// create a player factor
+// make 2 players
+// start a game with gameState method
+// make moves
+// coded to naturally swap btwn depending who is player1/player2
