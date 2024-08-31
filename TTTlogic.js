@@ -2,6 +2,7 @@
 
 const displayController=(function(){
     const gameBoardElement=document.getElementById('board');
+    const turnDisplayElement=document.getElementById('turn-display');
 
     function renderBoard(board){
         gameBoardElement.innerHTML='';
@@ -24,6 +25,7 @@ const displayController=(function(){
                     gameState.makeMove(i,j);
                     //recreate board when a move has been made
                     renderBoard(board);
+                    updateTurnDisplay();
                 });
 
                 gameBoardElement.appendChild(cell);
@@ -32,7 +34,15 @@ const displayController=(function(){
         }
 
     }
-    return{renderBoard};
+
+    function updateTurnDisplay(){
+        const currentPlayer=gameState.getcurrentPlayer();
+        if (currentPlayer){
+            turnDisplayElement.textContent=`${currentPlayer.getplayerName()}'s Turn`;
+        }
+    }
+
+    return{renderBoard,updateTurnDisplay};
 })();
 
 //GAME LOGIC
@@ -199,7 +209,10 @@ const gameState= (function () {
         }
         currentPlayer=player1;
         gameOver=false;
-        console.log('Game Reset')
+        console.log('Game Reset');
+        document.getElementById('player1-name').value='';
+        document.getElementById('player2-name').value='';
+        displayController.updateTurnDisplay();
     }
 
     return{startGame,makeMove,winChecks, resetGame, getcurrentPlayer:()=> currentPlayer}
@@ -242,13 +255,35 @@ function createPlayerFactory(){
 
 };
 
-const createPlayer = createPlayerFactory();
-const player1 = createPlayer('Player 1');
-const player2 = createPlayer('Player 2');
 
-gameState.startGame(player1, player2);
+function checkInputFields() {
+    const player1Name = document.getElementById('player1-name').value.trim();
+    const player2Name = document.getElementById('player2-name').value.trim();
+
+    if (player1Name !== '' && player2Name !== '') {
+        startGameWithNames(player1Name, player2Name);
+    }
+}
 
 
+function startGameWithNames(player1Name, player2Name) {
+    const createPlayer = createPlayerFactory();
+    const player1 = createPlayer(player1Name);
+    const player2 = createPlayer(player2Name);
+
+    gameState.startGame(player1, player2);
+    displayController.renderBoard(game_board);
+    displayController.updateTurnDisplay();
+}
+
+document.getElementById('reset-game').addEventListener('click', () => {
+    gameState.resetGame();
+    displayController.renderBoard(game_board);
+});
+
+
+document.getElementById('player1-name').addEventListener('input', checkInputFields);
+document.getElementById('player2-name').addEventListener('input', checkInputFields);
 
 
 window.onload = function () {

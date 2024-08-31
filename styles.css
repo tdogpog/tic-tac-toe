@@ -21,3 +21,15 @@
     border: 1px solid black;
 }
 
+#player-setup {
+    margin-bottom: 20px;
+}
+
+#player-setup input, #player-setup button {
+    margin: 5px;
+}
+
+#turn-display {
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
